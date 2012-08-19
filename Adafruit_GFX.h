@@ -20,9 +20,13 @@ All text above must be included in any redistribution
 #ifndef _ADAFRUIT_GFX_H_
 #define _ADAFRUIT_GFX_H_
 
-#ifndef swap
-#define swap(a, b) { int16_t t = a; a = b; b = t; }
-#endif
+static inline void swap(int16_t &a, int16_t &b)
+{
+    int16_t t = a;
+    
+    a = b;
+    b = t;
+}
 
 #ifndef _BV
 #define _BV(bit) (1<<(bit))
