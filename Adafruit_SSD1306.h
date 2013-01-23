@@ -89,7 +89,7 @@ All text above, and the splash screen must be included in any redistribution
 class DigitalOut2 : public DigitalOut
 {
 public:
-    DigitalOut2(PinName pin, bool active = false, const char *name = NULL) : DigitalOut(pin,name) { write(active); };
+    DigitalOut2(PinName pin, bool active = false) : DigitalOut(pin) { write(active); };
     DigitalOut2& operator= (int value) { write(value); return *this; };
     DigitalOut2& operator= (DigitalOut2& rhs) { write(rhs.read()); return *this; };
     operator int() { return read(); };
