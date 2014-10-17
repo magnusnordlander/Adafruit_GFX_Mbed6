@@ -23,6 +23,7 @@ All text above, and the splash screen below must be included in any redistributi
 #include "mbed.h"
 #include "Adafruit_SSD1306.h"
 
+#ifndef WITHOUT_SPLASH
 uint8_t splashScreen[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8] = { 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -91,12 +92,15 @@ uint8_t splashScreen[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 #endif
 };
+#endif
 
 Adafruit_SSD1306::Adafruit_SSD1306(SPI &spi, PinName DC, PinName RST, PinName CS)
     : Adafruit_GFX(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT)
     , rst(RST,false), cs(CS,true), dc(DC,false), mspi(spi)
 {
+#ifndef WITHOUT_SPLASH
     memcpy(buffer,splashScreen,sizeof(buffer));
+#endif
     begin();
     display();
 };
@@ -115,13 +119,13 @@ void Adafruit_SSD1306::begin(uint8_t vccstate)
     // turn on VCC (9V?)
     
 #if defined SSD1306_128_32
-    uint8_t setmultiplex = 0x1F;
-    uint8_t setcompins = 0x02;
-    uint8_t setcontrast = 0x8F;
+#define VAL_MULTIPLEX 0x1F
+#define VAL_COMPINS 0x02
+#define VAL_CONTRAST 0x8F
 #elif defined SSD1306_128_64
-    uint8_t setmultiplex = 0x3F;
-    uint8_t setcompins = 0x12;
-    uint8_t setcontrast = (vccstate == SSD1306_EXTERNALVCC) ? 0x9F : 0xCF;
+#define VAL_MULTIPLEX 0x3F
+#define VAL_COMPINS 0x12
+#define VAL_CONTRAST ((vccstate == SSD1306_EXTERNALVCC) ? 0x9F : 0xCF)
 #else
 #error "Display dimensions must be defined"
 #endif
@@ -130,28 +134,22 @@ void Adafruit_SSD1306::begin(uint8_t vccstate)
     ssd1306_command(SSD1306_SETDISPLAYCLOCKDIV);            // 0xD5
     ssd1306_command(0x80);                                  // the suggested ratio 0x80
     ssd1306_command(SSD1306_SETMULTIPLEX);                  // 0xA8
-    ssd1306_command(setmultiplex);
+    ssd1306_command(VAL_MULTIPLEX);
     ssd1306_command(SSD1306_SETDISPLAYOFFSET);              // 0xD3
     ssd1306_command(0x0);                                   // no offset
     ssd1306_command(SSD1306_SETSTARTLINE | 0x0);            // line #0
     ssd1306_command(SSD1306_CHARGEPUMP);                    // 0x8D
-    if (vccstate == SSD1306_EXTERNALVCC) 
-    { ssd1306_command(0x10); }
-    else 
-    { ssd1306_command(0x14); }
+    ssd1306_command((vccstate == SSD1306_EXTERNALVCC) ? 0x10 : 0x14);
     ssd1306_command(SSD1306_MEMORYMODE);                    // 0x20
     ssd1306_command(0x00);                                  // 0x0 act like ks0108
     ssd1306_command(SSD1306_SEGREMAP | 0x1);
     ssd1306_command(SSD1306_COMSCANDEC);
     ssd1306_command(SSD1306_SETCOMPINS);                    // 0xDA
-    ssd1306_command(setcompins);
+    ssd1306_command(VAL_COMPINS);
     ssd1306_command(SSD1306_SETCONTRAST);                   // 0x81
-    ssd1306_command(setcontrast);
+    ssd1306_command(VAL_CONTRAST);
     ssd1306_command(SSD1306_SETPRECHARGE);                  // 0xd9
-    if (vccstate == SSD1306_EXTERNALVCC) 
-    { ssd1306_command(0x22); }
-    else 
-    { ssd1306_command(0xF1); }
+    ssd1306_command((vccstate == SSD1306_EXTERNALVCC) ? 0x22 : 0xF1);
     ssd1306_command(SSD1306_SETVCOMDETECT);                 // 0xDB
     ssd1306_command(0x40);
     ssd1306_command(SSD1306_DISPLAYALLON_RESUME);           // 0xA4
