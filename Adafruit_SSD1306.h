@@ -72,7 +72,7 @@ All text above, and the splash screen must be included in any redistribution
 #endif
 
 //#define WITHOUT_SPLASH
-#define I2C_ADDRESS     0x78
+#define SSD_I2C_ADDRESS     0x78
 
 #define SSD_Command_Mode    0x00
 #define SSD_Data_Mode       0x40
