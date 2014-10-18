@@ -94,6 +94,7 @@ uint8_t splashScreen[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8] = {
 };
 #endif
 
+#ifdef SSD_USES_SPI
 Adafruit_SSD1306::Adafruit_SSD1306(SPI &spi, PinName DC, PinName RST, PinName CS)
     : Adafruit_GFX(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT)
     , rst(RST,false), cs(CS,true), dc(DC,false), mspi(spi)
@@ -104,6 +105,22 @@ Adafruit_SSD1306::Adafruit_SSD1306(SPI &spi, PinName DC, PinName RST, PinName CS
     begin();
     display();
 };
+#elif defined SSD_USES_I2C
+Adafruit_SSD1306::Adafruit_SSD1306(I2C &i2c, PinName RST)
+    : Adafruit_GFX(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT)
+    , rst(RST,false),mi2c(i2c)
+{
+    
+    mi2c.frequency(400000);
+    mi2c.start();
+#ifndef WITHOUT_SPLASH
+    memcpy(buffer,splashScreen,sizeof(buffer));
+#endif
+    begin();
+    display();
+};
+#endif
+
 
 void Adafruit_SSD1306::begin(uint8_t vccstate)
 {
@@ -198,20 +215,39 @@ void Adafruit_SSD1306::invertDisplay(bool i)
 
 void Adafruit_SSD1306::ssd1306_command(uint8_t c)
 {
+#ifdef SSD_USES_SPI
     cs = 1;
     dc = 0;
     cs = 0;
     mspi.write(c);
     cs = 1;
+    
+#elif defined SSD_USES_I2C
+    char buff[2] ;
+    buff[0] = SSD_Command_Mode ; 
+    buff[1] = c;
+    mi2c.write(SSD_I2C_ADDRESS,buff,sizeof(buff));
+#endif
+
 }
 
 void Adafruit_SSD1306::ssd1306_data(uint8_t c)
 {
+#ifdef SSD_USES_SPI
     cs = 1;
     dc = 1;
     cs = 0;
     mspi.write(c);
     cs = 1;
+#elif defined SSD_USES_I2C
+    char buff[2] ;
+    // Setup D/C to switch to data mode
+    buff[0] = SSD_Data_Mode; 
+    buff[1] = c;
+    // Write on i2c
+    mi2c.write(SSD_I2C_ADDRESS,buff,sizeof(buff));
+#endif
+
 }
 
 void Adafruit_SSD1306::display(void)
@@ -219,7 +255,7 @@ void Adafruit_SSD1306::display(void)
     ssd1306_command(SSD1306_SETLOWCOLUMN | 0x0);  // low col = 0
     ssd1306_command(SSD1306_SETHIGHCOLUMN | 0x0);  // hi col = 0
     ssd1306_command(SSD1306_SETSTARTLINE | 0x0); // line #0
-
+#ifdef SSD_USES_SPI
     cs = 1;
     dc = 1;
     cs = 0;
@@ -235,6 +271,22 @@ void Adafruit_SSD1306::display(void)
     }
     
     cs = 1;
+    
+#elif defined  SSD_USES_I2C
+    char buff[17] ;
+    uint8_t x ;
+    // Setup D/C to switch to data mode
+    buff[0] = SSD_Data_Mode; 
+
+    // loop trough all OLED buffer and 
+    // send a bunch of 16 data byte in one xmission
+    for (uint16_t i=0; i<(SSD1306_LCDWIDTH*SSD1306_LCDHEIGHT/8); i+=16 ) 
+    {
+        for (x=1; x<=16; x++) 
+            buff[x] = buffer[i+x];
+        mi2c.write(SSD_I2C_ADDRESS, buff, 17);
+    }
+#endif
 }
 
 // clear everything

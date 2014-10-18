@@ -43,6 +43,9 @@ All text above, and the splash screen must be included in any redistribution
     -----------------------------------------------------------------------*/
 //#define SSD1306_128_64
 #define SSD1306_128_32
+
+#define SSD_USES_SPI
+//#define SSD_USES_I2C
 /*=========================================================================*/
 
 #if defined SSD1306_128_64 && defined SSD1306_128_32
@@ -60,6 +63,19 @@ All text above, and the splash screen must be included in any redistribution
     #define SSD1306_LCDWIDTH 128
     #define SSD1306_LCDHEIGHT 32
 #endif
+
+#if defined SSD_USES_SPI && defined SSD_USES_I2C
+    #error "Only one communication mode can be specified at once in SSD1306.h"
+#endif
+#if !defined SSD_USES_SPI && !defined SSD_USES_I2C
+    #error "At least one communication mode must be specified in SSD1306.h"
+#endif
+
+//#define WITHOUT_SPLASH
+#define I2C_ADDRESS     0x78
+
+#define SSD_Command_Mode    0x00
+#define SSD_Data_Mode       0x40
 
 #define SSD1306_SETCONTRAST 0x81
 #define SSD1306_DISPLAYALLON_RESUME 0xA4
@@ -98,7 +114,11 @@ public:
 class Adafruit_SSD1306 : public Adafruit_GFX
 {
  public:
+#ifdef SSD_USES_SPI
     Adafruit_SSD1306(SPI &spi, PinName DC, PinName RST, PinName CS);
+#elif defined SSD_USES_I2C
+    Adafruit_SSD1306(I2C &i2c, PinName RST);
+#endif
     void begin(uint8_t switchvcc = SSD1306_SWITCHCAPVCC);
     void ssd1306_command(uint8_t c);
     void ssd1306_data(uint8_t c);
@@ -110,8 +130,15 @@ class Adafruit_SSD1306 : public Adafruit_GFX
     virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
     
 private:
-    DigitalOut2 rst,cs,dc;
+    
+    Serial pc;
+    DigitalOut2 rst;
+#ifdef SSD_USES_SPI
     SPI &mspi;
+    DigitalOut2 cs,dc;
+#elif defined SSD_USES_I2C
+    I2C &mi2c;
+#endif
     // the memory buffer for the LCD
     uint8_t buffer[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8];
 };
