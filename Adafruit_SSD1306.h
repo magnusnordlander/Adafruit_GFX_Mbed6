@@ -131,11 +131,10 @@ class Adafruit_SSD1306 : public Adafruit_GFX
     
 private:
     
-    Serial pc;
     DigitalOut2 rst;
 #ifdef SSD_USES_SPI
-    SPI &mspi;
     DigitalOut2 cs,dc;
+    SPI &mspi;
 #elif defined SSD_USES_I2C
     I2C &mi2c;
 #endif
