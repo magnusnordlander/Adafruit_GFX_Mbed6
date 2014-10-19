@@ -17,7 +17,7 @@ All text above, and the splash screen must be included in any redistribution
 *********************************************************************/
 
 /*
- *  Modified by Neal Horman 7/14/2012 for use in LPC1768
+ *  Modified by Neal Horman 7/14/2012 for use in mbed
  */
 
 #ifndef _ADAFRUIT_SSD1306_H_
@@ -26,120 +26,147 @@ All text above, and the splash screen must be included in any redistribution
 #include "mbed.h"
 #include "Adafruit_GFX.h"
 
-/*=========================================================================
-    SSD1306 Displays
-    -----------------------------------------------------------------------
-    The driver is used in multiple displays (128x64, 128x32, etc.).
-    Select the appropriate display below to create an appropriately
-    sized framebuffer, etc.
+#include <vector>
+#include <algorithm>
 
-    SSD1306_128_64  128x64 pixel display
-
-    SSD1306_128_32  128x32 pixel display
-
-    You also need to set the LCDWIDTH and LCDHEIGHT defines to an 
-    appropriate size
-
-    -----------------------------------------------------------------------*/
-//#define SSD1306_128_64
-#define SSD1306_128_32
-
-#define SSD_USES_SPI
-//#define SSD_USES_I2C
-/*=========================================================================*/
-
-#if defined SSD1306_128_64 && defined SSD1306_128_32
-    #error "Only one SSD1306 display can be specified at once in SSD1306.h"
-#endif
-#if !defined SSD1306_128_64 && !defined SSD1306_128_32
-    #error "At least one SSD1306 display must be specified in SSD1306.h"
-#endif
-
-#if defined SSD1306_128_64
-    #define SSD1306_LCDWIDTH 128
-    #define SSD1306_LCDHEIGHT 64
-#endif
-#if defined SSD1306_128_32
-    #define SSD1306_LCDWIDTH 128
-    #define SSD1306_LCDHEIGHT 32
-#endif
-
-#if defined SSD_USES_SPI && defined SSD_USES_I2C
-    #error "Only one communication mode can be specified at once in SSD1306.h"
-#endif
-#if !defined SSD_USES_SPI && !defined SSD_USES_I2C
-    #error "At least one communication mode must be specified in SSD1306.h"
-#endif
-
-//#define WITHOUT_SPLASH
-#define SSD_I2C_ADDRESS     0x78
-
-#define SSD_Command_Mode    0x00
-#define SSD_Data_Mode       0x40
-
-#define SSD1306_SETCONTRAST 0x81
-#define SSD1306_DISPLAYALLON_RESUME 0xA4
-#define SSD1306_DISPLAYALLON 0xA5
-#define SSD1306_NORMALDISPLAY 0xA6
-#define SSD1306_INVERTDISPLAY 0xA7
-#define SSD1306_DISPLAYOFF 0xAE
-#define SSD1306_DISPLAYON 0xAF
-#define SSD1306_SETDISPLAYOFFSET 0xD3
-#define SSD1306_SETCOMPINS 0xDA
-#define SSD1306_SETVCOMDETECT 0xDB
-#define SSD1306_SETDISPLAYCLOCKDIV 0xD5
-#define SSD1306_SETPRECHARGE 0xD9
-#define SSD1306_SETMULTIPLEX 0xA8
-#define SSD1306_SETLOWCOLUMN 0x00
-#define SSD1306_SETHIGHCOLUMN 0x10
-#define SSD1306_SETSTARTLINE 0x40
-#define SSD1306_MEMORYMODE 0x20
-#define SSD1306_COMSCANINC 0xC0
-#define SSD1306_COMSCANDEC 0xC8
-#define SSD1306_SEGREMAP 0xA0
-#define SSD1306_CHARGEPUMP 0x8D
-#define SSD1306_EXTERNALVCC 0x1
-#define SSD1306_SWITCHCAPVCC 0x2
-
-// an DigitalOut sub-class that provides a constructed default state
+// A DigitalOut sub-class that provides a constructed default state
 class DigitalOut2 : public DigitalOut
 {
 public:
-    DigitalOut2(PinName pin, bool active = false) : DigitalOut(pin) { write(active); };
-    DigitalOut2& operator= (int value) { write(value); return *this; };
-    DigitalOut2& operator= (DigitalOut2& rhs) { write(rhs.read()); return *this; };
-    operator int() { return read(); };
+	DigitalOut2(PinName pin, bool active = false) : DigitalOut(pin) { write(active); };
+	DigitalOut2& operator= (int value) { write(value); return *this; };
+	DigitalOut2& operator= (DigitalOut2& rhs) { write(rhs.read()); return *this; };
+	operator int() { return read(); };
 };
+
+#define SSD1306_EXTERNALVCC 0x1
+#define SSD1306_SWITCHCAPVCC 0x2
 
 class Adafruit_SSD1306 : public Adafruit_GFX
 {
- public:
-#ifdef SSD_USES_SPI
-    Adafruit_SSD1306(SPI &spi, PinName DC, PinName RST, PinName CS);
-#elif defined SSD_USES_I2C
-    Adafruit_SSD1306(I2C &i2c, PinName RST);
-#endif
-    void begin(uint8_t switchvcc = SSD1306_SWITCHCAPVCC);
-    void ssd1306_command(uint8_t c);
-    void ssd1306_data(uint8_t c);
+public:
+	Adafruit_SSD1306(PinName RST, uint8_t rawHeight = 32, uint8_t rawWidth = 128)
+		: Adafruit_GFX(rawWidth,rawHeight)
+		, rst(RST,false)
+	{};
+
+	void begin(uint8_t switchvcc = SSD1306_SWITCHCAPVCC);
+	virtual void command(uint8_t c) = 0;
+	virtual void data(uint8_t c) = 0;
     
-    void clearDisplay(void);
-    virtual void invertDisplay(bool i);
-    void display();
+	void clearDisplay(void);
+	virtual void invertDisplay(bool i);
+	void display();
+	virtual void splash();
     
-    virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
+	virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
     
-private:
-    
-    DigitalOut2 rst;
-#ifdef SSD_USES_SPI
-    DigitalOut2 cs,dc;
-    SPI &mspi;
-#elif defined SSD_USES_I2C
-    I2C &mi2c;
-#endif
-    // the memory buffer for the LCD
-    uint8_t buffer[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8];
+protected:
+	virtual void sendDisplayBuffer() = 0;
+	DigitalOut2 rst;
+
+	// the memory buffer for the LCD
+	std::vector<uint8_t> buffer;
+};
+
+class Adafruit_SSD1306_Spi : public Adafruit_SSD1306
+{
+public:
+	Adafruit_SSD1306_Spi(SPI &spi, PinName DC, PinName RST, PinName CS, uint8_t rawHieght = 32, uint8_t rawWidth = 128)
+	    : Adafruit_SSD1306(RST, rawHieght, rawWidth)
+	    , cs(CS,true)
+	    , dc(DC,false)
+	    , mspi(spi)
+	    {
+		    begin();
+		    splash();
+		    display();
+	    };
+
+	virtual void command(uint8_t c)
+	{
+	    cs = 1;
+	    dc = 0;
+	    cs = 0;
+	    mspi.write(c);
+	    cs = 1;
+	};
+
+	virtual void data(uint8_t c)
+	{
+	    cs = 1;
+	    dc = 1;
+	    cs = 0;
+	    mspi.write(c);
+	    cs = 1;
+	};
+
+protected:
+	virtual void sendDisplayBuffer()
+	{
+		cs = 1;
+		dc = 1;
+		cs = 0;
+
+		for(uint16_t i=0, q=buffer.size(); i<q; i++)
+			mspi.write(buffer[i]);
+
+		cs = 1;
+	};
+
+	DigitalOut2 cs, dc;
+	SPI &mspi;
+};
+
+class Adafruit_SSD1306_I2c : public Adafruit_SSD1306
+{
+public:
+	#define SSD_I2C_ADDRESS     0x78
+	Adafruit_SSD1306_I2c(I2C &i2c, PinName RST, uint8_t i2cAddress = SSD_I2C_ADDRESS, uint8_t rawHeight = 32, uint8_t rawWidth = 128)
+	    : Adafruit_SSD1306(RST, rawHeight, rawWidth)
+	    , mi2c(i2c)
+	    , mi2cAddress(i2cAddress)
+	    {
+		    begin();
+		    splash();
+		    display();
+	    };
+
+	virtual void command(uint8_t c)
+	{
+		char buff[2];
+		buff[0] = 0; // Command Mode
+		buff[1] = c;
+		mi2c.write(mi2cAddress, buff, sizeof(buff));
+	}
+
+	virtual void data(uint8_t c)
+	{
+		char buff[2];
+		buff[0] = 0x40; // Data Mode
+		buff[1] = c;
+		mi2c.write(mi2cAddress, buff, sizeof(buff));
+	};
+
+protected:
+	virtual void sendDisplayBuffer()
+	{
+		char buff[17];
+		buff[0] = 0x40; // Data Mode
+
+		// send display buffer in 16 byte chunks
+		for(uint16_t i=0, q=buffer.size(); i<q; i+=16 ) 
+		{	uint8_t x ;
+
+			// TODO - this will segfault if buffer.size() % 16 != 0
+			for(x=1; x<sizeof(buff); x++) 
+				buff[x] = buffer[i+x];
+			mi2c.write(mi2cAddress, buff, sizeof(buff));
+		}
+	};
+
+	I2C &mi2c;
+	uint8_t mi2cAddress;
 };
 
 #endif

@@ -14,11 +14,17 @@ All text above must be included in any redistribution
 ****************************************/
 
 /*
- *  Modified by Neal Horman 7/14/2012 for use in LPC1768
+ *  Modified by Neal Horman 7/14/2012 for use in mbed
  */
 
 #ifndef _ADAFRUIT_GFX_H_
 #define _ADAFRUIT_GFX_H_
+
+// Uncomment this on to enable all functionality
+//#define GFX_WANT_ABSTRACTS
+
+// Uncomment this to enable only runtime font scaling, without all the rest of the Abstracts
+//#define GFX_SIZEABLE_TEXT
 
 static inline void swap(int16_t &a, int16_t &b)
 {
@@ -62,13 +68,10 @@ class Adafruit_GFX : public Stream
     virtual int _putc(int value) { return writeChar(value); };
     virtual int _getc() { return -1; };
 
-#ifdef WANT_ABSTRACTS
+#ifdef GFX_WANT_ABSTRACTS
     // these are 'generic' drawing functions, so we can share them!
-    virtual void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
-    virtual void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
     virtual void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
     virtual void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-    virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
     virtual void fillScreen(uint16_t color);
 
     void drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
@@ -82,6 +85,12 @@ class Adafruit_GFX : public Stream
     void fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, uint16_t color);
 #endif
 
+#if defined(GFX_WANT_ABSTRACTS) || defined(GFX_SIZEABLE_TEXT)
+    virtual void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
+    virtual void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
+    virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+#endif
+
     void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color);
     void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size);
     size_t writeChar(uint8_t);
@@ -89,8 +98,10 @@ class Adafruit_GFX : public Stream
     int16_t width(void) { return _width; };
     int16_t height(void) { return _height; };
 
-    void setCursor(int16_t x, int16_t y) { cursor_x = x; cursor_y = y; };
+    void setTextCursor(int16_t x, int16_t y) { cursor_x = x; cursor_y = y; };
+#if defined(GFX_SIZEABLE_TEXT)
     void setTextSize(uint8_t s) { textsize = (s > 0) ? s : 1; };
+#endif
     void setTextColor(uint16_t c) { textcolor = c; textbgcolor = c; }
     void setTextColor(uint16_t c, uint16_t b) { textcolor = c; textbgcolor = b; };
     void setTextWrap(bool w) { wrap = w; };

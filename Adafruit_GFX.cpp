@@ -14,7 +14,7 @@ All text above must be included in any redistribution
 ****************************************/
 
 /*
- *  Modified by Neal Horman 7/14/2012 for use in LPC1768
+ *  Modified by Neal Horman 7/14/2012 for use in mbed
  */
 
 #include "mbed.h"
@@ -22,7 +22,7 @@ All text above must be included in any redistribution
 #include "Adafruit_GFX.h"
 #include "glcdfont.h"
 
-#ifdef WANT_ABSTRACTS
+#if defined(GFX_WANT_ABSTRACTS)
 // draw a circle outline
 void Adafruit_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
 {
@@ -146,7 +146,9 @@ void Adafruit_GFX::fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t c
         }
     }
 }
+#endif
 
+#if defined(GFX_WANT_ABSTRACTS) || defined(GFX_SIZEABLE_TEXT)
 // bresenham's algorithm - thx wikpedia
 void Adafruit_GFX::drawLine(int16_t x0, int16_t y0,  int16_t x1, int16_t y1, uint16_t color)
 {
@@ -192,7 +194,21 @@ void Adafruit_GFX::drawLine(int16_t x0, int16_t y0,  int16_t x1, int16_t y1, uin
     }
 }
 
+void Adafruit_GFX::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
+{
+    // stupidest version - update in subclasses if desired!
+    drawLine(x, y, x, y+h-1, color);
+}
 
+void Adafruit_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+{
+    // stupidest version - update in subclasses if desired!
+    for (int16_t i=x; i<x+w; i++)
+        drawFastVLine(i, y, h, color); 
+}
+#endif
+
+#if defined(GFX_WANT_ABSTRACTS)
 // draw a rectangle
 void Adafruit_GFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
@@ -202,25 +218,11 @@ void Adafruit_GFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t
     drawFastVLine(x+w-1, y, h, color);
 }
 
-void Adafruit_GFX::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
-{
-    // stupidest version - update in subclasses if desired!
-    drawLine(x, y, x, y+h-1, color);
-}
-
 void Adafruit_GFX::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
 {
     // stupidest version - update in subclasses if desired!
     drawLine(x, y, x+w-1, y, color);
 }
-
-void Adafruit_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
-{
-    // stupidest version - update in subclasses if desired!
-    for (int16_t i=x; i<x+w; i++)
-        drawFastVLine(i, y, h, color); 
-}
-
 
 void Adafruit_GFX::fillScreen(uint16_t color)
 {
@@ -407,26 +409,31 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t colo
         {
             if (line & 0x1)
             {
+#if defined(GFX_WANT_ABSTRACTS) || defined(GFX_SIZEABLE_TEXT)
                 if (size == 1) // default size
                     drawPixel(x+i, y+j, color);
-#ifdef WANT_ABSTRACTS
                 else // big size
                     fillRect(x+(i*size), y+(j*size), size, size, color);
+#else
+                drawPixel(x+i, y+j, color);
 #endif
             }
             else if (bg != color)
             {
+#if defined(GFX_WANT_ABSTRACTS) || defined(GFX_SIZEABLE_TEXT)
                 if (size == 1) // default size
                     drawPixel(x+i, y+j, bg);
-#ifdef WANT_ABSTRACTS
                 else // big size
                     fillRect(x+i*size, y+j*size, size, size, bg);
+#else
+                drawPixel(x+i, y+j, bg);
 #endif
             }
             line >>= 1;
         }
     }
 }
+
 void Adafruit_GFX::setRotation(uint8_t x)
 {
     x %= 4;  // cant be higher than 3
