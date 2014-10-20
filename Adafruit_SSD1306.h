@@ -48,7 +48,9 @@ public:
 	Adafruit_SSD1306(PinName RST, uint8_t rawHeight = 32, uint8_t rawWidth = 128)
 		: Adafruit_GFX(rawWidth,rawHeight)
 		, rst(RST,false)
-	{};
+	{
+		buffer.resize(rawHeight * rawWidth / 8);
+	};
 
 	void begin(uint8_t switchvcc = SSD1306_SWITCHCAPVCC);
 	virtual void command(uint8_t c) = 0;
