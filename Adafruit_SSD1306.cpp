@@ -23,9 +23,6 @@ All text above, and the splash screen below must be included in any redistributi
 #include "mbed.h"
 #include "Adafruit_SSD1306.h"
 
-/// Uncomment this define in __FILE to disable the AdaFruit splash image
-//#define NO_SPLASH_ADAFRUIT
-
 #define SSD1306_SETCONTRAST 0x81
 #define SSD1306_DISPLAYALLON_RESUME 0xA4
 #define SSD1306_DISPLAYALLON 0xA5

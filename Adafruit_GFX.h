@@ -20,11 +20,7 @@ All text above must be included in any redistribution
 #ifndef _ADAFRUIT_GFX_H_
 #define _ADAFRUIT_GFX_H_
 
-// Uncomment this on to enable all functionality
-//#define GFX_WANT_ABSTRACTS
-
-// Uncomment this to enable only runtime font scaling, without all the rest of the Abstracts
-//#define GFX_SIZEABLE_TEXT
+#include "Adafruit_GFX_Config.h"
 
 static inline void swap(int16_t &a, int16_t &b)
 {
