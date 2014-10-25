@@ -349,7 +349,6 @@ void Adafruit_GFX::fillTriangle ( int16_t x0, int16_t y0, int16_t x1, int16_t y1
         drawFastHLine(a, y, b-a+1, color);
     }
 }
-#endif
 
 void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color)
 {
@@ -362,6 +361,7 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16
         }
     }
 }
+#endif
 
 size_t Adafruit_GFX::writeChar(uint8_t c)
 {

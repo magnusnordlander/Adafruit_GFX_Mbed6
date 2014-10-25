@@ -119,6 +119,10 @@ class Adafruit_GFX : public Stream
      * @note GFX_WANT_ABSTRACTS must be defined in Adafruit_GFX_config.h
      */
     void fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, uint16_t color);
+    /** Draw a bitmap
+     * @note GFX_WANT_ABSTRACTS must be defined in Adafruit_GFX_config.h
+     */
+    void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color);
 #endif
 
 #if defined(GFX_WANT_ABSTRACTS) || defined(GFX_SIZEABLE_TEXT)
@@ -136,37 +140,35 @@ class Adafruit_GFX : public Stream
     virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
 #endif
 
-    /// Draw a bitmap
-    void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color);
     /// Draw a text character at a specified pixel location
     void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size);
     /// Draw a text character at the text cursor location
     size_t writeChar(uint8_t);
 
     /// Get the width of the display in pixels
-    int16_t width(void) { return _width; };
+    inline int16_t width(void) { return _width; };
     /// Get the height of the display in pixels
-    int16_t height(void) { return _height; };
+    inline int16_t height(void) { return _height; };
 
     /// Set the text cursor location, based on the size of the text
-    void setTextCursor(int16_t x, int16_t y) { cursor_x = x; cursor_y = y; };
-#if defined(GFX_SIZEABLE_TEXT)
+    inline void setTextCursor(int16_t x, int16_t y) { cursor_x = x; cursor_y = y; };
+#if defined(GFX_WANT_ABSTRACTS) || defined(GFX_SIZEABLE_TEXT)
     /** Set the size of the text to be drawn
      * @note Make sure to enable either GFX_SIZEABLE_TEXT or GFX_WANT_ABSTRACTS
      */
-    void setTextSize(uint8_t s) { textsize = (s > 0) ? s : 1; };
+    inline void setTextSize(uint8_t s) { textsize = (s > 0) ? s : 1; };
 #endif
     /// Set the text foreground and background colors to be the same
-    void setTextColor(uint16_t c) { textcolor = c; textbgcolor = c; }
+    inline void setTextColor(uint16_t c) { textcolor = c; textbgcolor = c; }
     /// Set the text foreground and background colors independantly
-    void setTextColor(uint16_t c, uint16_t b) { textcolor = c; textbgcolor = b; };
+    inline void setTextColor(uint16_t c, uint16_t b) { textcolor = c; textbgcolor = b; };
     /// Set text wraping mode true or false
-    void setTextWrap(bool w) { wrap = w; };
+    inline void setTextWrap(bool w) { wrap = w; };
 
     /// Set the display rotation, 1, 2, 3, or 4
     void setRotation(uint8_t r);
     /// Get the current rotation
-    uint8_t getRotation(void) { rotation %= 4; return rotation; };
+    inline uint8_t getRotation(void) { rotation %= 4; return rotation; };
 
 protected:
     int16_t  _rawWidth, _rawHeight;   // this is the 'raw' display w/h - never changes
