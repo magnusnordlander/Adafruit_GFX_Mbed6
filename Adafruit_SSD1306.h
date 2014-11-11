@@ -208,7 +208,7 @@ protected:
 
 			// TODO - this will segfault if buffer.size() % 16 != 0
 			for(x=1; x<sizeof(buff); x++) 
-				buff[x] = buffer[i+x];
+				buff[x] = buffer[i+x-1];
 			mi2c.write(mi2cAddress, buff, sizeof(buff));
 		}
 	};
