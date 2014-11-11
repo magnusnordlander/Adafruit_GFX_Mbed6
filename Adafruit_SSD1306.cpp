@@ -94,9 +94,9 @@ void Adafruit_SSD1306::begin(uint8_t vccstate)
 
     command(SSD1306_DISPLAYALLON_RESUME);
 
-    //command(SSD1306_NORMALDISPLAY);
+    command(SSD1306_NORMALDISPLAY);
     
-    //command(SSD1306_DISPLAYON);
+    command(SSD1306_DISPLAYON);
 }
 
 // Set a single pixel
