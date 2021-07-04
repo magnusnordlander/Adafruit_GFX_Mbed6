@@ -45,15 +45,17 @@ All text above, and the splash screen below must be included in any redistributi
 #define SSD1306_SEGREMAP 0xA0
 #define SSD1306_CHARGEPUMP 0x8D
 
+using namespace std::chrono_literals;
+
 void Adafruit_SSD1306::begin(uint8_t vccstate)
 {
     rst = 1;
     // VDD (3.3V) goes high at start, lets just chill for a ms
-    wait_ms(1);
+    rtos::ThisThread::sleep_for(1ms);
     // bring reset low
     rst = 0;
     // wait 10ms
-    wait_ms(10);
+    rtos::ThisThread::sleep_for(10ms);
     // bring out of reset
     rst = 1;
     // turn on VCC (9V?)

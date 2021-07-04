@@ -29,16 +29,6 @@ All text above, and the splash screen must be included in any redistribution
 #include <vector>
 #include <algorithm>
 
-// A DigitalOut sub-class that provides a constructed default state
-class DigitalOut2 : public DigitalOut
-{
-public:
-	DigitalOut2(PinName pin, bool active = false) : DigitalOut(pin) { write(active); };
-	DigitalOut2& operator= (int value) { write(value); return *this; };
-	DigitalOut2& operator= (DigitalOut2& rhs) { write(rhs.read()); return *this; };
-	operator int() { return read(); };
-};
-
 #define SSD1306_EXTERNALVCC 0x1
 #define SSD1306_SWITCHCAPVCC 0x2
 
@@ -50,7 +40,7 @@ public:
 class Adafruit_SSD1306 : public Adafruit_GFX
 {
 public:
-	Adafruit_SSD1306(PinName RST, uint8_t rawHeight = 32, uint8_t rawWidth = 128)
+	explicit Adafruit_SSD1306(PinName RST, uint8_t rawHeight = 32, uint8_t rawWidth = 128)
 		: Adafruit_GFX(rawWidth,rawHeight)
 		, rst(RST,false)
 	{
@@ -62,11 +52,11 @@ public:
 	// These must be implemented in the derived transport driver
 	virtual void command(uint8_t c) = 0;
 	virtual void data(uint8_t c) = 0;
-	virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
+	void drawPixel(int16_t x, int16_t y, uint16_t color) override;
 
 	/// Clear the display buffer    
-	void clearDisplay(void);
-	virtual void invertDisplay(bool i);
+	void clearDisplay();
+	void invertDisplay(bool i) override;
 
 	/// Cause the display to be updated with the buffer content.
 	void display();
@@ -75,7 +65,7 @@ public:
     
 protected:
 	virtual void sendDisplayBuffer() = 0;
-	DigitalOut2 rst;
+	mbed::DigitalOut rst;
 
 	// the memory buffer for the LCD
 	std::vector<uint8_t> buffer;
@@ -100,7 +90,7 @@ public:
 	 * @param rawHeight - the vertical number of pixels for the display, defaults to 32
 	 * @param rawWidth - the horizonal number of pixels for the display, defaults to 128
 	 */
-	Adafruit_SSD1306_Spi(SPI &spi, PinName DC, PinName RST, PinName CS, uint8_t rawHieght = 32, uint8_t rawWidth = 128)
+	Adafruit_SSD1306_Spi(mbed::SPI &spi, PinName DC, PinName RST, PinName CS, uint8_t rawHieght = 32, uint8_t rawWidth = 128)
 	    : Adafruit_SSD1306(RST, rawHieght, rawWidth)
 	    , cs(CS,true)
 	    , dc(DC,false)
@@ -111,7 +101,7 @@ public:
 		    display();
 	    };
 
-	virtual void command(uint8_t c)
+	void command(uint8_t c) override
 	{
 	    cs = 1;
 	    dc = 0;
@@ -120,7 +110,7 @@ public:
 	    cs = 1;
 	};
 
-	virtual void data(uint8_t c)
+	void data(uint8_t c) override
 	{
 	    cs = 1;
 	    dc = 1;
@@ -130,14 +120,14 @@ public:
 	};
 
 protected:
-	virtual void sendDisplayBuffer()
+	void sendDisplayBuffer() override
 	{
 		cs = 1;
 		dc = 1;
 		cs = 0;
 
-		for(uint16_t i=0, q=buffer.size(); i<q; i++)
-			mspi.write(buffer[i]);
+		for(unsigned char i : buffer)
+			mspi.write(i);
 
 		if(height() == 32)
 		{
@@ -148,73 +138,8 @@ protected:
 		cs = 1;
 	};
 
-	DigitalOut2 cs, dc;
-	SPI &mspi;
-};
-
-/** This is the I2C SSD1306 display driver transport class
- *
- */
-class Adafruit_SSD1306_I2c : public Adafruit_SSD1306
-{
-public:
-	#define SSD_I2C_ADDRESS     0x78
-	/** Create a SSD1306 I2C transport display driver instance with the specified RST pin name, the I2C address, as well as the display dimensions
-	 *
-	 * Required parameters
-	 * @param i2c - A reference to an initialized I2C object
-	 * @param RST - The Reset pin name
-	 *
-	 * Optional parameters
-	 * @param i2cAddress - The i2c address of the display
-	 * @param rawHeight - The vertical number of pixels for the display, defaults to 32
-	 * @param rawWidth - The horizonal number of pixels for the display, defaults to 128
-	 */
-	Adafruit_SSD1306_I2c(I2C &i2c, PinName RST, uint8_t i2cAddress = SSD_I2C_ADDRESS, uint8_t rawHeight = 32, uint8_t rawWidth = 128)
-	    : Adafruit_SSD1306(RST, rawHeight, rawWidth)
-	    , mi2c(i2c)
-	    , mi2cAddress(i2cAddress)
-	    {
-		    begin();
-		    splash();
-		    display();
-	    };
-
-	virtual void command(uint8_t c)
-	{
-		char buff[2];
-		buff[0] = 0; // Command Mode
-		buff[1] = c;
-		mi2c.write(mi2cAddress, buff, sizeof(buff));
-	}
-
-	virtual void data(uint8_t c)
-	{
-		char buff[2];
-		buff[0] = 0x40; // Data Mode
-		buff[1] = c;
-		mi2c.write(mi2cAddress, buff, sizeof(buff));
-	};
-
-protected:
-	virtual void sendDisplayBuffer()
-	{
-		char buff[17];
-		buff[0] = 0x40; // Data Mode
-
-		// send display buffer in 16 byte chunks
-		for(uint16_t i=0, q=buffer.size(); i<q; i+=16 ) 
-		{	uint8_t x ;
-
-			// TODO - this will segfault if buffer.size() % 16 != 0
-			for(x=1; x<sizeof(buff); x++) 
-				buff[x] = buffer[i+x-1];
-			mi2c.write(mi2cAddress, buff, sizeof(buff));
-		}
-	};
-
-	I2C &mi2c;
-	uint8_t mi2cAddress;
+	mbed::DigitalOut cs, dc;
+	mbed::SPI &mspi;
 };
 
 #endif
